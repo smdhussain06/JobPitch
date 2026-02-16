@@ -1,0 +1,63 @@
+name: JobHunt Autopilot
+
+on:
+  schedule:
+    # Every 20 minutes
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+    # Allow manual trigger from the Actions tab
+
+jobs:
+  send-pitch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Setup Python ────────────────────────────────────
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ── 3. Install dependencies ────────────────────────────
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ── 4. Verify Secrets ──────────────────────────────────
+      - name: Verify Secrets
+        run: |
+          echo "🔐 Verifying required secrets..."
+          MISSING=""
+          if [ -z "$OPENROUTER_API_KEY" ]; then MISSING="$MISSING OPENROUTER_API_KEY"; fi
+          if [ -z "$SMTP_EMAIL" ]; then MISSING="$MISSING SMTP_EMAIL"; fi
+          if [ -z "$SMTP_PASSWORD" ]; then MISSING="$MISSING SMTP_PASSWORD"; fi
+          if [ -z "$GH_TOKEN" ]; then MISSING="$MISSING GH_TOKEN"; fi
+          if [ -n "$MISSING" ]; then
+            echo "❌ Missing secrets:$MISSING"
+            exit 1
+          fi
+          echo "✅ All secrets are set."
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          SMTP_EMAIL: ${{ secrets.SMTP_EMAIL }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      # ── 5. Run Autopilot ───────────────────────────────────
+      - name: Run JobHunt Autopilot
+        run: python main.py
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          SMTP_EMAIL: ${{ secrets.SMTP_EMAIL }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          SENDER_NAME: ${{ secrets.SENDER_NAME }}
+          SENDER_PHONE: ${{ secrets.SENDER_PHONE }}
+          SENDER_LINKEDIN: ${{ secrets.SENDER_LINKEDIN }}
+          SENDER_PORTFOLIO: ${{ secrets.SENDER_PORTFOLIO }}
