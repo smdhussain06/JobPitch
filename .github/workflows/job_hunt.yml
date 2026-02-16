@@ -2,8 +2,8 @@ name: JobHunt Autopilot
 
 on:
   schedule:
-    # Every 20 minutes
-    - cron: '*/20 * * * *'
+    # Every 5 minutes (GitHub free tier adds 5-20 min jitter)
+    - cron: '*/5 * * * *'
   workflow_dispatch:
     # Allow manual trigger from the Actions tab
 
