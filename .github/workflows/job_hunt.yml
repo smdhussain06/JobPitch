@@ -51,7 +51,7 @@ jobs:
 
       # ── 5. Run Autopilot ───────────────────────────────────
       - name: Run JobHunt Autopilot
-        run: python main.py
+        run: python -u main.py
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SMTP_EMAIL: ${{ secrets.SMTP_EMAIL }}
