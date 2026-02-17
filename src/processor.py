@@ -34,6 +34,24 @@ def get_next_lead(csv_path: str) -> Optional[dict]:
     return None
 
 
+def get_next_batch(csv_path: str, batch_size: int = 15) -> list[dict]:
+    """
+    Return up to `batch_size` unsent leads from the CSV.
+    Each lead dict includes '_row_index' for marking as sent later.
+    """
+    batch = []
+    with open(csv_path, "r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for idx, row in enumerate(reader):
+            status = row.get("Sent Status", "").strip().lower()
+            if status in ("", "no"):
+                row["_row_index"] = idx
+                batch.append(row)
+                if len(batch) >= batch_size:
+                    break
+    return batch
+
+
 def mark_as_sent(csv_path: str, row_index: int) -> None:
     """
     Update the given row in the CSV: set 'Sent Status' to 'Yes'

@@ -2,8 +2,9 @@ name: JobHunt Autopilot
 
 on:
   schedule:
-    # Every 1 minute (fastest possible — GitHub free tier adds its own jitter)
-    - cron: '* * * * *'
+    # Every hour — each batch takes ~30 min (15 emails × 2-min drip)
+    # ~24 runs/day × 15 emails = ~360/day, safely under 450 cap
+    - cron: '0 * * * *'
   workflow_dispatch:
     # Allow manual trigger from the Actions tab
 
