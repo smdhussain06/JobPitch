@@ -1,11 +1,10 @@
 """
 agent.py — Dynamic Pitch Agent
-Generates hyper-personalized job pitches using OpenRouter AI (free models).
-Cycles between free models with patient retries on rate limits.
+Generates hyper-personalized job pitches using Google Gemini API (free tier).
+Free tier: 15 RPM, 1500 requests/day — more than enough for batch mode.
 """
 
 import os
-import json
 import time
 import requests
 
@@ -13,18 +12,8 @@ import requests
 class Agent:
     """AI Agent that generates personalized cold-email pitches."""
 
-    OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-    DEFAULT_MAX_TOKENS = 600
-    TOKEN_REDUCTION_FACTOR = 0.75
-
-    # Free models that actually exist on OpenRouter
-    MODELS = [
-        "google/gemma-3-27b-it:free",
-        "google/gemma-3-12b-it:free",
-    ]
-
-    # Total attempts across all models before giving up
-    MAX_TOTAL_ATTEMPTS = 8
+    GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    MAX_RETRIES = 5
 
     def __init__(self, company_name: str, role: str, jd_snippet: str,
                  value_add: str, why_i_love_them: str = ""):
@@ -33,13 +22,12 @@ class Agent:
         self.jd_snippet = jd_snippet
         self.value_add = value_add
         self.why_i_love_them = why_i_love_them
-        self.api_key = os.getenv("OPENROUTER_API_KEY", "")
+        self.api_key = os.getenv("GEMINI_API_KEY", "")
         self.sender_name = os.getenv("SENDER_NAME", "Mohammad Hussain")
 
-    def _build_system_prompt(self) -> str:
-        return (
-            "You are a professional career coach writing cold emails on behalf of "
-            f"{self.sender_name}. "
+    def _build_prompt(self) -> str:
+        system_rules = (
+            f"You are a professional career coach writing cold emails on behalf of {self.sender_name}. "
             "Rules you MUST follow:\n"
             "1. Output ONLY plain text — absolutely NO markdown, no bold, no bullet points, no asterisks.\n"
             "2. The first line must be the subject line in the format: Subject: <subject text>\n"
@@ -52,90 +40,73 @@ class Agent:
             "8. End the body with a brief, confident call to action.\n"
         )
 
-    def _build_user_prompt(self) -> str:
-        parts = [
-            f"Write a cold email to {self.company_name} for the role of {self.role}.",
-            f"Job description snippet: {self.jd_snippet}",
-            f"My unique value add: {self.value_add}",
-        ]
+        task = f"\nWrite a cold email to {self.company_name} for the role of {self.role}."
+        task += f"\nJob description snippet: {self.jd_snippet}"
+        task += f"\nMy unique value add: {self.value_add}"
+
         if self.why_i_love_them:
-            parts.append(
-                f"Personal connection / why I love them: {self.why_i_love_them} "
+            task += (
+                f"\nPersonal connection / why I love them: {self.why_i_love_them} "
                 "(Weave this naturally into the opening line to show genuine interest.)"
             )
-        parts.append(
-            f"The sender's name is {self.sender_name}. Use it in the sign-off."
-        )
-        return "\n".join(parts)
+
+        task += f"\nThe sender's name is {self.sender_name}. Use it in the sign-off."
+
+        return system_rules + task
 
     def generate_pitch(self) -> dict:
         """
-        Call OpenRouter to generate a pitch email.
+        Call Google Gemini to generate a pitch email.
         Returns {"subject": str, "body": str}.
-        Cycles through free models, retries with backoff on 429.
         """
         if not self.api_key:
-            raise ValueError("OPENROUTER_API_KEY is not set.")
+            raise ValueError("GEMINI_API_KEY is not set.")
 
-        max_tokens = self.DEFAULT_MAX_TOKENS
+        url = f"{self.GEMINI_URL}?key={self.api_key}"
 
-        for attempt in range(1, self.MAX_TOTAL_ATTEMPTS + 1):
-            # Rotate between available free models
-            model = self.MODELS[(attempt - 1) % len(self.MODELS)]
-
-            print(f"  🤖 Attempt {attempt}/{self.MAX_TOTAL_ATTEMPTS} "
-                  f"({model}, tokens={int(max_tokens)})...")
-
-            payload = {
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": self._build_system_prompt()},
-                    {"role": "user", "content": self._build_user_prompt()},
-                ],
-                "max_tokens": int(max_tokens),
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": self._build_prompt()}
+                    ]
+                }
+            ],
+            "generationConfig": {
                 "temperature": 0.7,
-                "provider": {
-                    "data_collection": "allow",
-                },
-            }
+                "maxOutputTokens": 600,
+            },
+        }
 
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/JobHuntAutopilot",
-                "X-Title": "JobHunt Autopilot",
-            }
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            print(f"  🤖 Attempt {attempt}/{self.MAX_RETRIES} (Gemini Flash)...")
 
             try:
-                response = requests.post(
-                    self.OPENROUTER_URL, headers=headers, json=payload, timeout=60
-                )
+                response = requests.post(url, json=payload, timeout=60)
             except requests.exceptions.Timeout:
                 print(f"  ⏰ Timed out, retrying...")
                 continue
 
-            if response.status_code == 402:
-                print(f"  ⚠️  402 Credits — reducing tokens...")
-                max_tokens = int(max_tokens * self.TOKEN_REDUCTION_FACTOR)
-                if max_tokens < 100:
-                    raise RuntimeError("Credits exhausted at minimum tokens.")
-                continue
-
             if response.status_code == 429:
-                wait = 15 * attempt   # 15s, 30s, 45s, 60s... (patient linear backoff)
+                wait = 15 * attempt
                 print(f"  ⏳ Rate limited — waiting {wait}s...")
                 time.sleep(wait)
                 continue
 
-            response.raise_for_status()
-            data = response.json()
+            if response.status_code >= 400:
+                print(f"  ⚠️  HTTP {response.status_code}: {response.text[:200]}")
+                if attempt < self.MAX_RETRIES:
+                    time.sleep(10)
+                    continue
+                response.raise_for_status()
 
-            raw_text = data["choices"][0]["message"]["content"].strip()
-            print(f"  ✅ Pitch generated ({model})")
+            data = response.json()
+            raw_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+            print(f"  ✅ Pitch generated (Gemini Flash)")
             return self._parse_pitch(raw_text)
 
         raise RuntimeError(
-            f"Failed to generate pitch after {self.MAX_TOTAL_ATTEMPTS} attempts."
+            f"Failed to generate pitch after {self.MAX_RETRIES} retries."
         )
 
     @staticmethod
