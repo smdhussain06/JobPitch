@@ -1,8 +1,7 @@
 """
 agent.py — Dynamic Pitch Agent
 Generates hyper-personalized job pitches using OpenRouter AI.
-Includes automatic model fallback on 429 (Rate Limited) and
-402 (Insufficient Credits) errors.
+Uses openrouter/auto so OpenRouter picks the best available model.
 """
 
 import os
@@ -15,20 +14,10 @@ class Agent:
     """AI Agent that generates personalized cold-email pitches."""
 
     OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+    MODEL = "openrouter/auto"   # Let OpenRouter pick the best available model
     DEFAULT_MAX_TOKENS = 600
+    MAX_RETRIES = 5
     TOKEN_REDUCTION_FACTOR = 0.75
-
-    # Free models to cycle through — if one is rate-limited, try the next
-    FALLBACK_MODELS = [
-        "google/gemma-3-27b-it:free",
-        "google/gemma-3-12b-it:free",
-        "meta-llama/llama-3.1-8b-instruct:free",
-        "mistralai/mistral-7b-instruct:free",
-        "qwen/qwen3-8b:free",
-    ]
-
-    # Max retries PER MODEL before moving to the next one
-    MAX_RETRIES_PER_MODEL = 3
 
     def __init__(self, company_name: str, role: str, jd_snippet: str,
                  value_add: str, why_i_love_them: str = ""):
@@ -76,87 +65,71 @@ class Agent:
         """
         Call OpenRouter to generate a pitch email.
         Returns {"subject": str, "body": str}.
-
-        Strategy:
-        - Try each model in FALLBACK_MODELS with up to MAX_RETRIES_PER_MODEL attempts
-        - On 429 (rate limited): retry with backoff, then move to next model
-        - On 402 (credits): reduce tokens and retry
-        - First successful response wins
+        Uses openrouter/auto — OpenRouter picks the best available model.
         """
         if not self.api_key:
             raise ValueError("OPENROUTER_API_KEY is not set.")
 
         max_tokens = self.DEFAULT_MAX_TOKENS
-        last_error = None
 
-        for model_idx, model in enumerate(self.FALLBACK_MODELS):
-            print(f"  🤖 Trying model [{model_idx + 1}/{len(self.FALLBACK_MODELS)}]: {model}")
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            print(f"  🤖 Attempt {attempt}/{self.MAX_RETRIES} "
+                  f"(model=auto, max_tokens={int(max_tokens)})...")
 
-            for attempt in range(1, self.MAX_RETRIES_PER_MODEL + 1):
-                print(f"     Attempt {attempt}/{self.MAX_RETRIES_PER_MODEL} "
-                      f"(max_tokens={int(max_tokens)})...")
+            payload = {
+                "model": self.MODEL,
+                "messages": [
+                    {"role": "system", "content": self._build_system_prompt()},
+                    {"role": "user", "content": self._build_user_prompt()},
+                ],
+                "max_tokens": int(max_tokens),
+                "temperature": 0.7,
+                "provider": {
+                    "data_collection": "allow",
+                },
+            }
 
-                payload = {
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": self._build_system_prompt()},
-                        {"role": "user", "content": self._build_user_prompt()},
-                    ],
-                    "max_tokens": int(max_tokens),
-                    "temperature": 0.7,
-                    "provider": {
-                        "data_collection": "allow",
-                    },
-                }
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com/JobHuntAutopilot",
+                "X-Title": "JobHunt Autopilot",
+            }
 
-                headers = {
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "https://github.com/JobHuntAutopilot",
-                    "X-Title": "JobHunt Autopilot",
-                }
+            try:
+                response = requests.post(
+                    self.OPENROUTER_URL, headers=headers, json=payload, timeout=60
+                )
+            except requests.exceptions.Timeout:
+                print(f"  ⏰ Request timed out, retrying...")
+                continue
 
-                try:
-                    response = requests.post(
-                        self.OPENROUTER_URL, headers=headers, json=payload, timeout=60
+            if response.status_code == 402:
+                print(f"  ⚠️  402 Insufficient Credits — reducing token budget...")
+                max_tokens = int(max_tokens * self.TOKEN_REDUCTION_FACTOR)
+                if max_tokens < 100:
+                    raise RuntimeError(
+                        "Cannot generate pitch: credits exhausted even at "
+                        "minimum token count."
                     )
-                except requests.exceptions.Timeout:
-                    print(f"     ⏰ Request timed out, retrying...")
-                    last_error = "Request timed out"
-                    continue
+                continue
 
-                if response.status_code == 402:
-                    print(f"     ⚠️  402 Insufficient Credits — reducing token budget...")
-                    max_tokens = int(max_tokens * self.TOKEN_REDUCTION_FACTOR)
-                    if max_tokens < 100:
-                        last_error = "Credits exhausted even at minimum token count"
-                        break  # Move to next model
-                    continue
+            if response.status_code == 429:
+                wait = 10 * (2 ** (attempt - 1))  # 10s, 20s, 40s...
+                print(f"  ⏳ 429 Rate Limited — waiting {wait}s before retry...")
+                time.sleep(wait)
+                continue
 
-                if response.status_code == 429:
-                    wait = 5 * (2 ** (attempt - 1))  # 5s, 10s, 20s
-                    print(f"     ⏳ 429 Rate Limited — waiting {wait}s...")
-                    time.sleep(wait)
-                    last_error = f"429 Rate Limited on {model}"
-                    continue
+            response.raise_for_status()
+            data = response.json()
 
-                if response.status_code >= 400:
-                    print(f"     ⚠️  HTTP {response.status_code} — trying next option...")
-                    last_error = f"HTTP {response.status_code}: {response.text[:200]}"
-                    break  # Move to next model
-
-                # Success!
-                data = response.json()
-                raw_text = data["choices"][0]["message"]["content"].strip()
-                print(f"     ✅ Pitch generated with {model}")
-                return self._parse_pitch(raw_text)
-
-            # Exhausted retries for this model — try the next one
-            print(f"     ⏭️  Moving to next model...")
+            model_used = data.get("model", "unknown")
+            raw_text = data["choices"][0]["message"]["content"].strip()
+            print(f"  ✅ Pitch generated (routed to: {model_used})")
+            return self._parse_pitch(raw_text)
 
         raise RuntimeError(
-            f"Failed to generate pitch after trying all {len(self.FALLBACK_MODELS)} "
-            f"models. Last error: {last_error}"
+            f"Failed to generate pitch after {self.MAX_RETRIES} retries."
         )
 
     @staticmethod
