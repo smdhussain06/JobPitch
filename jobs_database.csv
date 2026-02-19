@@ -39,9 +39,9 @@ Pinesphere,hr@pinesphere.example.com,Business Analyst Intern,Requirement gatheri
 Actualisation,careers@actualisation.example.com,Data Science Intern,Implementing statistical models.,Their use of advanced statistics in everyday apps is inspiring.,Yes,2026-02-19 01:47:44 UTC
 TalentGlider,garima@talentglider.example.com,Data Analyst Intern,Analyzing HR and talent data.,Changing the recruitment landscape through data is an awesome goal.,Yes,2026-02-19 01:49:49 UTC
 Techno Derivation,jobhelp@technoderivation.example.com,Business Analyst Intern,Bridging business and tech requirements.,Their client-centric approach to software development is remarkable.,Yes,2026-02-19 01:52:05 UTC
-NetCoreCloud,hr@netcorecloud.example.com,Product Intern,Managing SaaS product lifecycles.,Their marketing automation platform is an industry benchmark I admire.,Yes,2026-02-19 20:08:50 UTC
-Novotree Minds,careers@novotree.example.com,Python Intern,Developing Python automation scripts.,I love their clean code practices and strict Python standards.,Yes,2026-02-19 20:10:52 UTC
-CodeLabs Technologies,harshithab@codelabs.example.com,Data Analyst,Visualizing complex datasets.,Their interactive data visualization tools are incredibly intuitive to use.,Yes,2026-02-19 20:12:53 UTC
+NetCoreCloud,hr@netcorecloud.example.com,Product Intern,Managing SaaS product lifecycles.,Their marketing automation platform is an industry benchmark I admire.,Yes,2026-02-19 20:25:44 UTC
+Novotree Minds,careers@novotree.example.com,Python Intern,Developing Python automation scripts.,I love their clean code practices and strict Python standards.,Yes,2026-02-19 20:27:46 UTC
+CodeLabs Technologies,harshithab@codelabs.example.com,Data Analyst,Visualizing complex datasets.,Their interactive data visualization tools are incredibly intuitive to use.,Yes,2026-02-19 20:29:47 UTC
 Apptunix,careers@apptunix.example.com,Junior Business Analyst,Pre-sales and business strategy.,Their mobile app portfolio shows a deep understanding of UX.,Yes,2026-02-19 00:01:54 UTC
 Mahindra,hr@mahindra.example.com,Data Analyst Internship,Analyzing automotive data telemetry.,Applying data science to the automotive sector is my absolute dream.,Yes,2026-02-19 00:03:58 UTC
 LogicLadder,careers@logicladder.example.com,Product Management Intern,Product management for IoT apps.,Their environmental IoT solutions are a step towards a better future.,Yes,2026-02-19 00:06:14 UTC
@@ -50,18 +50,18 @@ Comet,aditya@comet.example.com,Marketing Analyst,Marketing data analysis.,Their 
 Aun Digital,hr@aundigital.example.com,Business Analyst Intern,Digital agency operations.,I love their creative approach to digital transformation.,Yes,2026-02-19 00:13:10 UTC
 ADS Service Tech,hr@adsservicetech.example.com,Level Designer Intern,Designing immersive game levels.,Their game environments are visually stunning and highly immersive.,Yes,2026-02-19 00:15:14 UTC
 TA Uncharted,careers@tauncharted.example.com,Database Management Intern,Managing relational databases.,Their commitment to extreme data integrity is impressive.,Yes,2026-02-19 00:19:52 UTC
-The Intelligent Marketers,hiring@intelligentmarketers.example.com,UI/UX Design Intern,Designing marketing interfaces.,Their marketing campaigns always feature incredible user experiences.,Yes,2026-02-19 20:14:55 UTC
-Morelife London,hr@morelife.example.com,Google Apps Script Intern,Automating workflows via scripts.,I love their innovative use of simple scripting to solve complex problems.,Yes,2026-02-19 20:16:56 UTC
-Hewlett Packard Enterprise,careers@hpe.com,External Intern,Enterprise tech solutions.,Their legacy in shaping modern computing is incredibly inspiring.,Yes,2026-02-19 20:18:57 UTC
-Thetravelights,hr@thetravelights.example.com,Full-Stack Intern,Building travel tech platforms.,Their platform makes booking travel an absolute breeze.,Yes,2026-02-19 20:20:59 UTC
-Filter Trade Technologies,careers@filtertrade.example.com,Video Editor Intern,Editing promotional videos.,Their visual storytelling is captivating and highly engaging.,Yes,2026-02-19 20:23:01 UTC
-KajKarma Innovations,hr@kajkarma.example.com,PHP Laravel Developer,Backend development in Laravel.,Their robust backend systems handle massive scale elegantly.,Yes,2026-02-19 20:25:02 UTC
-Devmani Traders,careers@devmani.example.com,Computer Vision Intern,Healthcare computer vision.,Using CV to improve healthcare outcomes is a noble cause.,Yes,2026-02-19 20:27:03 UTC
-Whinta,hr@whinta.example.com,Junior PHP Intern,Web backend development.,I admire their fast-paced startup culture and clean UIs.,Yes,2026-02-19 20:29:05 UTC
-Kodever Consulting,careers@kodever.example.com,React Native Developer,Cross-platform app development.,Their mobile apps always feel completely native and smooth.,Yes,2026-02-19 20:31:07 UTC
-Vincentius Technology,hr@vincentius.example.com,UI/UX Designer Intern,Designing sleek software interfaces.,Their focus on minimal design really resonates with me.,Yes,2026-02-19 20:33:08 UTC
-Earn Language,careers@earnlanguage.example.com,Mobile App Development Intern,Educational mobile apps.,Gamifying language learning is something I am deeply passionate about.,Yes,2026-02-19 20:35:10 UTC
-Quest Solutions,hr@questsolutions.example.com,Design Intern,Corporate branding and design.,Their corporate rebranding projects are absolutely top-notch.,Yes,2026-02-19 20:37:12 UTC
+The Intelligent Marketers,hiring@intelligentmarketers.example.com,UI/UX Design Intern,Designing marketing interfaces.,Their marketing campaigns always feature incredible user experiences.,Yes,2026-02-19 20:31:48 UTC
+Morelife London,hr@morelife.example.com,Google Apps Script Intern,Automating workflows via scripts.,I love their innovative use of simple scripting to solve complex problems.,Yes,2026-02-19 20:33:50 UTC
+Hewlett Packard Enterprise,careers@hpe.com,External Intern,Enterprise tech solutions.,Their legacy in shaping modern computing is incredibly inspiring.,Yes,2026-02-19 20:35:51 UTC
+Thetravelights,hr@thetravelights.example.com,Full-Stack Intern,Building travel tech platforms.,Their platform makes booking travel an absolute breeze.,Yes,2026-02-19 20:37:52 UTC
+Filter Trade Technologies,careers@filtertrade.example.com,Video Editor Intern,Editing promotional videos.,Their visual storytelling is captivating and highly engaging.,Yes,2026-02-19 20:39:54 UTC
+KajKarma Innovations,hr@kajkarma.example.com,PHP Laravel Developer,Backend development in Laravel.,Their robust backend systems handle massive scale elegantly.,Yes,2026-02-19 20:41:56 UTC
+Devmani Traders,careers@devmani.example.com,Computer Vision Intern,Healthcare computer vision.,Using CV to improve healthcare outcomes is a noble cause.,Yes,2026-02-19 20:43:57 UTC
+Whinta,hr@whinta.example.com,Junior PHP Intern,Web backend development.,I admire their fast-paced startup culture and clean UIs.,Yes,2026-02-19 20:45:59 UTC
+Kodever Consulting,careers@kodever.example.com,React Native Developer,Cross-platform app development.,Their mobile apps always feel completely native and smooth.,Yes,2026-02-19 20:48:00 UTC
+Vincentius Technology,hr@vincentius.example.com,UI/UX Designer Intern,Designing sleek software interfaces.,Their focus on minimal design really resonates with me.,Yes,2026-02-19 20:50:02 UTC
+Earn Language,careers@earnlanguage.example.com,Mobile App Development Intern,Educational mobile apps.,Gamifying language learning is something I am deeply passionate about.,Yes,2026-02-19 20:52:03 UTC
+Quest Solutions,hr@questsolutions.example.com,Design Intern,Corporate branding and design.,Their corporate rebranding projects are absolutely top-notch.,Yes,2026-02-19 20:54:05 UTC
 IT Web Tech,careers@itwebtech.example.com,PHP Developer Intern,Building modern web portals.,Their web portals are highly optimized and accessible.,No,
 RYL NEUROACADEMY,hr@rylneuro.example.com,Intern,EdTech operations.,Merging neuroscience with education tech is a brilliant concept.,No,
 AI Certs,careers@aicerts.example.com,Content Writer Intern,Writing AI certification material.,Standardizing AI education is a crucial step for the entire industry.,No,
