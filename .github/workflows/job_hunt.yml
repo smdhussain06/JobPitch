@@ -34,7 +34,7 @@ jobs:
         run: |
           echo "🔐 Verifying required secrets..."
           MISSING=""
-          if [ -z "$GEMINI_API_KEY" ]; then MISSING="$MISSING GEMINI_API_KEY"; fi
+          if [ -z "$GROQ_API_KEY" ]; then MISSING="$MISSING GROQ_API_KEY"; fi
           if [ -z "$SMTP_EMAIL" ]; then MISSING="$MISSING SMTP_EMAIL"; fi
           if [ -z "$SMTP_PASSWORD" ]; then MISSING="$MISSING SMTP_PASSWORD"; fi
           if [ -z "$GH_TOKEN" ]; then MISSING="$MISSING GH_TOKEN"; fi
@@ -44,7 +44,7 @@ jobs:
           fi
           echo "✅ All secrets are set."
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           SMTP_EMAIL: ${{ secrets.SMTP_EMAIL }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -53,7 +53,7 @@ jobs:
       - name: Run JobHunt Autopilot
         run: python -u main.py
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           SMTP_EMAIL: ${{ secrets.SMTP_EMAIL }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
