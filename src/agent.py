@@ -1,7 +1,7 @@
 """
 agent.py — Dynamic Pitch Agent
-Generates hyper-personalized job pitches using OpenRouter AI.
-Uses openrouter/auto so OpenRouter picks the best available model.
+Generates hyper-personalized job pitches using OpenRouter AI (free models).
+Cycles between free models with patient retries on rate limits.
 """
 
 import os
@@ -14,10 +14,17 @@ class Agent:
     """AI Agent that generates personalized cold-email pitches."""
 
     OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-    MODEL = "openrouter/auto"   # Let OpenRouter pick the best available model
     DEFAULT_MAX_TOKENS = 600
-    MAX_RETRIES = 5
     TOKEN_REDUCTION_FACTOR = 0.75
+
+    # Free models that actually exist on OpenRouter
+    MODELS = [
+        "google/gemma-3-27b-it:free",
+        "google/gemma-3-12b-it:free",
+    ]
+
+    # Total attempts across all models before giving up
+    MAX_TOTAL_ATTEMPTS = 8
 
     def __init__(self, company_name: str, role: str, jd_snippet: str,
                  value_add: str, why_i_love_them: str = ""):
@@ -65,19 +72,22 @@ class Agent:
         """
         Call OpenRouter to generate a pitch email.
         Returns {"subject": str, "body": str}.
-        Uses openrouter/auto — OpenRouter picks the best available model.
+        Cycles through free models, retries with backoff on 429.
         """
         if not self.api_key:
             raise ValueError("OPENROUTER_API_KEY is not set.")
 
         max_tokens = self.DEFAULT_MAX_TOKENS
 
-        for attempt in range(1, self.MAX_RETRIES + 1):
-            print(f"  🤖 Attempt {attempt}/{self.MAX_RETRIES} "
-                  f"(model=auto, max_tokens={int(max_tokens)})...")
+        for attempt in range(1, self.MAX_TOTAL_ATTEMPTS + 1):
+            # Rotate between available free models
+            model = self.MODELS[(attempt - 1) % len(self.MODELS)]
+
+            print(f"  🤖 Attempt {attempt}/{self.MAX_TOTAL_ATTEMPTS} "
+                  f"({model}, tokens={int(max_tokens)})...")
 
             payload = {
-                "model": self.MODEL,
+                "model": model,
                 "messages": [
                     {"role": "system", "content": self._build_system_prompt()},
                     {"role": "user", "content": self._build_user_prompt()},
@@ -101,35 +111,31 @@ class Agent:
                     self.OPENROUTER_URL, headers=headers, json=payload, timeout=60
                 )
             except requests.exceptions.Timeout:
-                print(f"  ⏰ Request timed out, retrying...")
+                print(f"  ⏰ Timed out, retrying...")
                 continue
 
             if response.status_code == 402:
-                print(f"  ⚠️  402 Insufficient Credits — reducing token budget...")
+                print(f"  ⚠️  402 Credits — reducing tokens...")
                 max_tokens = int(max_tokens * self.TOKEN_REDUCTION_FACTOR)
                 if max_tokens < 100:
-                    raise RuntimeError(
-                        "Cannot generate pitch: credits exhausted even at "
-                        "minimum token count."
-                    )
+                    raise RuntimeError("Credits exhausted at minimum tokens.")
                 continue
 
             if response.status_code == 429:
-                wait = 10 * (2 ** (attempt - 1))  # 10s, 20s, 40s...
-                print(f"  ⏳ 429 Rate Limited — waiting {wait}s before retry...")
+                wait = 15 * attempt   # 15s, 30s, 45s, 60s... (patient linear backoff)
+                print(f"  ⏳ Rate limited — waiting {wait}s...")
                 time.sleep(wait)
                 continue
 
             response.raise_for_status()
             data = response.json()
 
-            model_used = data.get("model", "unknown")
             raw_text = data["choices"][0]["message"]["content"].strip()
-            print(f"  ✅ Pitch generated (routed to: {model_used})")
+            print(f"  ✅ Pitch generated ({model})")
             return self._parse_pitch(raw_text)
 
         raise RuntimeError(
-            f"Failed to generate pitch after {self.MAX_RETRIES} retries."
+            f"Failed to generate pitch after {self.MAX_TOTAL_ATTEMPTS} attempts."
         )
 
     @staticmethod
